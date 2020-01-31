@@ -79,11 +79,12 @@ public class ProtoCompatabilityInsight {
   }
 
   private static void printParentTrace(
-      ProtoCallerTree.ProtoElementNode protoElementNode,  Map<String, ProtoCallerTree.ProtoElementNode> elementNodeMap) {
+      ProtoCallerTree.ProtoElementNode protoElementNode,
+      Map<String, ProtoCallerTree.ProtoElementNode> elementNodeMap) {
     while (protoElementNode.getParents() != null) {
       for (String parent : protoElementNode.getParents()) {
-        printParentTrace(elementNodeMap.get(parent),elementNodeMap);
-        System.out.print(protoElementNode.getProtoName()+",");
+        printParentTrace(elementNodeMap.get(parent), elementNodeMap);
+        System.out.print(protoElementNode.getProtoName() + ",");
       }
     }
   }
