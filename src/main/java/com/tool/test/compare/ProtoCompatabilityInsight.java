@@ -74,16 +74,16 @@ public class ProtoCompatabilityInsight {
         .getMissingInVersion1()) {
       ProtoCallerTree.ProtoElementNode protoElementNode =
           elementNodeMap.get(missingInVersion1);
-      printParentTrace(protoElementNode);
-      System.out.print(protoElementNode.getProtoName()+",");
+      printParentTrace(protoElementNode,elementNodeMap);
     }
   }
 
   private static void printParentTrace(
-      ProtoCallerTree.ProtoElementNode protoElementNode) {
+      ProtoCallerTree.ProtoElementNode protoElementNode,  Map<String, ProtoCallerTree.ProtoElementNode> elementNodeMap) {
     while (protoElementNode.getParents() != null) {
       for (String parent : protoElementNode.getParents()) {
-        printParentTrace(incompatabilityMetaData.);
+        printParentTrace(elementNodeMap.get(parent),elementNodeMap);
+        System.out.print(protoElementNode.getProtoName()+",");
       }
     }
   }
