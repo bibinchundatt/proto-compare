@@ -1,9 +1,6 @@
 package com.tool.test.compare;
 
-import com.squareup.protoparser.FieldElement;
-import com.squareup.protoparser.MessageElement;
-import com.squareup.protoparser.ProtoParser;
-import com.squareup.protoparser.TypeElement;
+import com.squareup.protoparser.*;
 import com.sun.deploy.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,21 +174,39 @@ public class ProtoCompatabilityInsight {
         LOG.info("         " + felement);
       }
     }
+    else if (typeElement instanceof  EnumElement) {
+      EnumElement enumElement = (EnumElement) typeElement;
+      List<EnumConstantElement> fields = enumElement.constants();
+      for ( EnumConstantElement field: fields) {
+        LOG.info("         "  + field);
+      }
+    }
   }
 
   private static boolean isForwardCompatible(TypeElement version1TypeElement,
       TypeElement version2TypeElement) {
     boolean isForWardCompatible = true;
-
+    LOG.error("");
     if (version1TypeElement instanceof MessageElement) {
       MessageElement messageElementv1 = (MessageElement) version1TypeElement;
       MessageElement messageElementv2 = (MessageElement) version2TypeElement;
       {
         for (FieldElement ev1 : messageElementv1.fields()) {
           if (!messageElementv2.fields().contains(ev1)) {
+
             LOG.error("Incompatible Element {}", ev1);
             isForWardCompatible = false;
           }
+        }
+      }
+    } else if (version1TypeElement instanceof EnumElement){
+      EnumElement enumElementV1 = (EnumElement) version1TypeElement;
+      EnumElement enumElementV2 = (EnumElement) version2TypeElement;
+      List<EnumConstantElement> fields = enumElementV1.constants();
+      for ( EnumConstantElement fieldV1: fields) {
+        if(!enumElementV2.constants().contains(fieldV1)){
+          LOG.error("Incompatible Enum {}", fieldV1);
+          isForWardCompatible = false;
         }
       }
     }
