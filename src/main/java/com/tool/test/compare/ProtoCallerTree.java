@@ -6,8 +6,10 @@ import com.squareup.protoparser.MessageElement;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ProtoCallerTree {
 
@@ -22,31 +24,31 @@ public class ProtoCallerTree {
   class ProtoElementNode {
 
     String protoName;
-    private List<String> parents = null;
-    private List<String> childs = null;
+    private Set<String> parents = null;
+    private Set<String> childs = null;
 
     public ProtoElementNode(String protoName) {
       this.protoName = protoName;
     }
 
-    public List<String> getParents() {
+    public Set<String> getParents() {
       return parents;
     }
 
-    public List<String> getChilds() {
+    public Set<String> getChilds() {
       return childs;
     }
 
     public void addToParent(String element) {
       if (parents == null) {
-        parents = new ArrayList<>(1);
+        parents = new HashSet<>(1);
       }
       parents.add(element);
     }
 
     public void addToChild(String element) {
       if (childs == null) {
-        childs = new ArrayList<>(1);
+        childs = new HashSet<>(1);
       }
       childs.add(element);
     }
@@ -76,11 +78,8 @@ public class ProtoCallerTree {
   private void updateNode(ProtoElementNode node, FieldElement fieldElement) {
     DataType type = fieldElement.type();
     String name = type.toString();
-    ProtoElementNode currentNode = elementNodeMap
-        .putIfAbsent(name, new ProtoElementNode(name));
-    if (currentNode == null) {
-      currentNode = elementNodeMap.get(name);
-    }
+    elementNodeMap.putIfAbsent(name, new ProtoElementNode(name));
+    ProtoElementNode currentNode = elementNodeMap.get(name);
     currentNode.addToParent(node.getProtoName());
     node.addToChild(name);
   }

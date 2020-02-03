@@ -52,4 +52,12 @@ public class DirectoryData {
   public HashMap<String, File> getProtoFilesMap() {
     return new HashMap<>(fileMap);
   }
+
+  public File getBaseDir() {
+    return baseDir;
+  }
+
+  public void setBaseDir(File baseDir) {
+    this.baseDir = baseDir;
+  }
 }

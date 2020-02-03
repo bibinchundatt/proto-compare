@@ -15,6 +15,7 @@ public class IncompatibilityMetaData {
   public IncompatibilityMetaData() {
     missingInVersion2 = new ArrayList<>();
     missingInVersion1 = new ArrayList<>();
+    incompatibles=new ArrayList<>();
   }
 
   public void addMissingVersion1(String protoName) {
