@@ -59,8 +59,44 @@ public class ProtoCompatabilityInsight {
     callerTree.parseDirectoryData();
 
     compareProtoElements(version1, version2);
+    compareServiceElements(version1,version2);
 
+    LOG.info("##############Service names #########");
+    printAllServiceNames(version1);
+
+    LOG.info("##############Trace print #########");
     printTrace(callerTree);
+  }
+
+  private static void printAllServiceNames(DirectoryData version1) {
+    Map<String, Map<String, RpcElement>> serviceRpcMapV1 =
+        version1.getServiceRpcMap();
+    serviceRpcMapV1.keySet().iterator()
+        .forEachRemaining(s -> System.out.println(s));
+  }
+
+  private static void compareServiceElements(DirectoryData version1,
+      DirectoryData version2) {
+    Map<String, Map<String, RpcElement>> serviceRpcMapV1 =
+        version1.getServiceRpcMap();
+    Map<String, Map<String, RpcElement>> serviceRpcMapV2 =
+        version2.getServiceRpcMap();
+
+    serviceRpcMapV1.entrySet().iterator().forEachRemaining(mapEntry -> {
+      String serviceNameV1 = mapEntry.getKey();
+      Map<String, RpcElement> stringRpcElementMapv1 = mapEntry.getValue();
+      if (!serviceRpcMapV2.containsKey(serviceNameV1)) {
+        LOG.info("Missing Service = " + serviceNameV1);
+      } else {
+        Map<String, RpcElement> stringRpcElementMapv2 =
+            serviceRpcMapV2.get(serviceNameV1);
+        stringRpcElementMapv1.forEach((rpcname, elem) -> {
+          if (!stringRpcElementMapv2.get(rpcname).equals(elem)) {
+            LOG.info("Missing api in version 2 = " + elem);
+          }
+        });
+      }
+    });
   }
 
   private static void printTrace(ProtoCallerTree callerTree) {
@@ -73,12 +109,12 @@ public class ProtoCompatabilityInsight {
           elementNodeMap.get(missingInVersion1);
       System.out.println("///////////Proto/////////////////   " + protoElementNode
           .getProtoName());
-      printParentTrace(protoElementNode, elementNodeMap, 0);
+      printParentTrace(callerTree, protoElementNode, elementNodeMap, 0);
       System.out.println();
     }
   }
 
-  private static void printParentTrace(
+  private static void printParentTrace(ProtoCallerTree callerTree,
       ProtoCallerTree.ProtoElementNode protoElementNode,
       Map<String, ProtoCallerTree.ProtoElementNode> elementNodeMap, int depth) {
     if (protoElementNode.getParents() != null) {
@@ -90,13 +126,24 @@ public class ProtoCompatabilityInsight {
         ProtoCallerTree.ProtoElementNode tmp = elementNodeMap.get(parent);
         if (tmp != null && !tmp.protoName.equals(protoElementNode.protoName)) {
           System.out.print(tmp.getProtoName());
-          printParentTrace(elementNodeMap.get(parent), elementNodeMap,
-              depth + 1);
+          printParentTrace(callerTree, elementNodeMap.get(parent),
+              elementNodeMap, depth + 1);
           System.out.println();
           for (int i = 0; i < depth; i++) {
             System.out.print("    ");
           }
         }
+      }
+    } else {
+      Map<String, String> protoServiceName = callerTree.getProtoServiceName();
+      String serviceName =
+          protoServiceName.get(protoElementNode.getProtoName());
+      if (null != serviceName) {
+        System.out.println();
+        for (int i = 0; i <= depth; i++) {
+          System.out.print("    ");
+        }
+        System.out.print(serviceName);
       }
     }
   }
@@ -133,7 +180,6 @@ public class ProtoCompatabilityInsight {
     for (String version1ProtoName : version1ProtoNames) {
       //compare TypeElement
       if (!version2ProtoNames.contains(version1ProtoName)) {
-        //LOG.info("Missing Proto Message in version 2 {}", version1ProtoName);
         incompatabilityMetaData.addMissingVersion1(version1ProtoName);
       } else {
         TypeElement version1TypeElement =
@@ -156,7 +202,6 @@ public class ProtoCompatabilityInsight {
 
     for (String version2ProtoName : version2ProtoNames) {
       if (!version1ProtoNames.contains(version2ProtoName)) {
-        //LOG.info("Missing Proto Message in version 1 {}", version2ProtoName);
         incompatabilityMetaData.addMissingVersion2(version2ProtoName);
       }
     }
@@ -171,7 +216,7 @@ public class ProtoCompatabilityInsight {
     if (typeElement instanceof MessageElement) {
       List<FieldElement> fields = ((MessageElement) typeElement).fields();
       for (FieldElement felement : fields) {
-        LOG.info("         " + felement);
+        LOG.info("         " + toString(felement));
       }
     }
     else if (typeElement instanceof  EnumElement) {
@@ -181,6 +226,12 @@ public class ProtoCompatabilityInsight {
         LOG.info("         "  + field);
       }
     }
+  }
+
+  public static String toString(FieldElement element) {
+    return "FieldElement{label=" + element.label() + ", " + "type=" + element
+        .type() + ", " + "name=" + element.name() + ", " + "tag=" + element
+        .tag() + ", " + "options=" + element.options() + "}";
   }
 
   private static boolean isForwardCompatible(TypeElement version1TypeElement,
@@ -194,7 +245,7 @@ public class ProtoCompatabilityInsight {
         for (FieldElement ev1 : messageElementv1.fields()) {
           if (!messageElementv2.fields().contains(ev1)) {
 
-            LOG.error("Incompatible Element {}", ev1);
+            LOG.error("Incompatible Element {}", toString(ev1));
             isForWardCompatible = false;
           }
         }

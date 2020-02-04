@@ -1,7 +1,9 @@
 package com.tool.test.compare;
 
 import com.google.common.collect.ImmutableMap;
+import com.squareup.protoparser.DataType;
 import com.squareup.protoparser.ProtoFile;
+import com.squareup.protoparser.RpcElement;
 import com.squareup.protoparser.TypeElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,17 +22,23 @@ public class DirectoryData {
 
   private Map<String, File> fileMap;
   private Map<String, TypeElement> protoTypeToElement;
+  private Map<String,Map<String, RpcElement>> serviceRpcMap;
   private File baseDir;
 
   public DirectoryData(File baseDir) {
     this.baseDir = baseDir;
     fileMap = new HashMap<>();
     protoTypeToElement = new HashMap<>();
+    serviceRpcMap = new HashMap<>();
   }
 
   public void addFile(Path path) {
     File file = path.toFile();
     fileMap.put(file.getName(), file);
+  }
+
+  public Map<String, Map<String, RpcElement>> getServiceRpcMap() {
+    return serviceRpcMap;
   }
 
   public File getFile(String name) {
@@ -46,6 +54,16 @@ public class DirectoryData {
       if (protoTypeToElement.put(typeElement.name(), typeElement) != null) {
         LOG.error("DuplicateEntry added to ProtoName");
       }
+    });
+
+    path.services().iterator().forEachRemaining(serviceElement -> {
+      serviceElement.rpcs().iterator().forEachRemaining(rpcElement -> {
+        String name = rpcElement.name();
+        serviceRpcMap.putIfAbsent(serviceElement.name(), new HashMap<>());
+        Map<String, RpcElement> rpcNameToElement =
+            serviceRpcMap.get(serviceElement.name());
+        rpcNameToElement.putIfAbsent(name, rpcElement);
+      });
     });
   }
 

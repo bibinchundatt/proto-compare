@@ -3,6 +3,8 @@ package com.tool.test.compare;
 import com.squareup.protoparser.DataType;
 import com.squareup.protoparser.FieldElement;
 import com.squareup.protoparser.MessageElement;
+import com.squareup.protoparser.RpcElement;
+import com.squareup.protoparser.ServiceElement;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,10 +17,20 @@ public class ProtoCallerTree {
 
   private DirectoryData directoryData;
   private Map<String, ProtoElementNode> elementNodeMap;
+  private Map<String, String> protoServiceName;
 
   public ProtoCallerTree(DirectoryData directoryData) {
     this.directoryData = directoryData;
     elementNodeMap = new HashMap<>();
+    protoServiceName = new HashMap<>();
+  }
+
+  public DirectoryData getDirectoryData() {
+    return directoryData;
+  }
+
+  public Map<String, String> getProtoServiceName() {
+    return protoServiceName;
   }
 
   class ProtoElementNode {
@@ -62,7 +74,6 @@ public class ProtoCallerTree {
     return elementNodeMap;
   }
 
-
   void parseDirectoryData() {
     directoryData.getProtoTypeToElement().forEach((protoName, typeElement) -> {
       elementNodeMap.putIfAbsent(protoName, new ProtoElementNode(protoName));
@@ -73,6 +84,16 @@ public class ProtoCallerTree {
             .forEach(element -> updateNode(node, element));
       }
     });
+
+    directoryData.getServiceRpcMap()
+        .forEach((serviceName, methodNameRPCElem) -> {
+          methodNameRPCElem.forEach((methodName, rpcElement) -> {
+            protoServiceName.putIfAbsent(rpcElement.requestType().name(),
+                serviceName + "#" + methodName);
+            protoServiceName.putIfAbsent(rpcElement.responseType().name(),
+                serviceName + "#" + methodName);
+          });
+        });
   }
 
   private void updateNode(ProtoElementNode node, FieldElement fieldElement) {
